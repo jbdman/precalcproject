@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html  lang="en-us">
+
+<meta http-equiv="content-type" content="text/html;charset=utf-8" />
+<head>
+<title>Josh and Mark's Precalc Project</title>
+
+<style type="text/css">
+.interactive{
+  text-align:center;
+  display:table;
+  margin:0 auto;
+  user-select:none;
+  -webkit-user-select:none
+}
+#slidersCanvasWrap{
+  display:table-row
+}
+
+#slid1Val, #slid2Val{
+  display:inline-block;
+  text-align:right
+}
+#slid1Val{
+  min-width:60px;
+  font-size:1em
+}
+#slid2Val{
+  min-width:60px
+}
+#firstTab{
+  display:table;
+  width:100%
+}
+#firstRow, #secRow{
+  display:table-row
+}
+#secRow p:first-child{
+  margin-bottom:0
+}
+#secRow p:nth-child(3){
+  margin-top:0
+}
+#secRow p > .joshmagic, #vertSlider > .joshmagic{
+  font-size:1em
+}
+.tc{
+  display:table-cell
+}
+#vertSlider, #horiSlidersCanvas{
+  display:table-cell
+}
+#vertSlider{
+  vertical-align:middle;
+  text-align:center
+}
+
+span.posi{
+  position:relative;
+  top:-6px
+}
+#WebGLCanvas{
+  display:table-cell;
+  position:relative;
+  overflow:hidden
+}
+canvas {
+  width:100%;
+  height:100%
+}
+#conType{
+}
+@media screen and (min-width: 1024px) {
+  #WebGLCanvas{
+    width:450px;
+    height:450px
+}
+
+}
+@media screen and (min-width:500px) and (max-width: 1023px) {
+  #WebGLCanvas{
+    width:350px;
+    height:350px
+}
+
+}
+@media screen and (max-width: 499px) {
+  #content > .interactive{
+    padding:2px
+}
+  #WebGLCanvas{
+    width:240px;
+    height:240px
+}
+
+  #slid1Val{
+    min-width:70px
+}
+  #slid1Val, #secRow p > .joshmagic, #vertSlider > .joshmagic{
+    font-size:0.95em
+}
+}
+
+
+</style>
+
+<body id="top">
+
+
+<center>
+<input id="slider1" type="range" min="-0.5" value = "0.1" max="0.5" step="0.01" />
+<input id="slider2" type="range" min="-10" value = "0" max="10" step="0.1" /> 
+<input id="slider3" type="range" min="-10" value = "5" max="10" step="0.5" />
+</center>
+
+<div class="interactive">
+ <div id="slidersCanvasWrap">
+  <div id="horiSlidersCanvas"> 
+   <div id="firstTab">  
+    <div id="firstRow">  
+   <div class="tc">
+    <span class="joshmagic">
+      <span class="posi"><i></i></span>
+    </span> 
+   </div>
+   
+   <div class="tc">
+     <span class="posi">
+       <span id="slid1Val" class="joshmagic"></span>
+     </span>
+   </div>
+    </div>  
+   </div>
+   <p>Conic Type: <span id="conType">Ellipse</span></p>
+   <div id="secRow"> 
+    <div>
+     <div id="WebGLCanvas"></div>
+     <p>
+    <span class="joshmagic">
+     <span class="posi">
+       <i></i>
+     </span> 
+     
+     <span class="posi">
+       <span id="slid2Val"></span>
+     </span>
+    </span>
+   </p>
+    </div>
+  <div id="vertSlider">
+   <span class="joshmagic">
+    <span class="posi"><i></i></span><br />
+    
+    <span id="slid3Val"></span>
+   </span>
+  </div>    
+   </div>
+  </div>  
+ </div>
+ 
+</div>
+
+ 
+
+<script>
+function doThree() {
+  var WebGLCanvas = document.getElementById("WebGLCanvas");
+  var canvasWidth = WebGLCanvas.clientWidth;
+  var canvasHeight = WebGLCanvas.clientHeight;
+  var canvasRect = WebGLCanvas.getBoundingClientRect();
+
+  slider1.value = 0.1;  
+  slider2.value = 0;  
+  slider3.value = -3;
+
+  var fudge = new Array();
+
+
+  function solveQuadratic(a,b,c) {
+    var solns = new Array();
+    solns[0] = (-b+Math.sqrt(b*b - 4*a*c))/(2*a);
+    solns[1] = (-b - Math.sqrt(b*b - 4*a*c))/(2*a); 
+    return solns;
+  }
+
+
+  var scene = new THREE.Scene();
+
+
+  camera = new THREE.PerspectiveCamera( 40, canvasWidth/canvasHeight, 1, 10000 );
+  camera.position.set( 40, 30, 15 );
+  camera.up = new THREE.Vector3( 0, 0, 1 );
+  camera.lookAt( new THREE.Vector3( 0, 0, 0 ) );
+
+
+
+  var renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setClearColor( 0xffffff, 1.0 );
+  renderer.setSize(canvasWidth, canvasHeight);
+
+  WebGLCanvas.appendChild(renderer.domElement);
+
+
+
+  var light = new THREE.AmbientLight( 0xFFFFFF );
+  scene.add(light);
+
+
+  upperGeom = new THREE.CylinderGeometry(0, 10, 10, 40, 5, false) ;
+    coneMaterial = new THREE.MeshPhongMaterial( { color: 0x39CBCC, transparent:true, opacity: .5 } )
+  var meshUppercone = new THREE.Mesh( upperGeom, coneMaterial ) ;
+  meshUppercone.position.set(0.0, 0.0, 5.0); 
+  point = new THREE.Vector3(0.0, 0.0, -20.0)
+  upperGeom.applyMatrix( new THREE.Matrix4().makeRotationX( Math.PI/2 ) );
+  meshUppercone.lookAt( point );
+  scene.add( meshUppercone );
+
+  lowerGeom = new THREE.CylinderGeometry(0, 10, 10, 60, 5, false) ;
+  var meshLowerCone = new THREE.Mesh( lowerGeom, coneMaterial ) ;
+  meshLowerCone.position.set(0.0, 0.0, -5.0); 
+  point = new THREE.Vector3(0.0, 0.0, 20.0)
+  lowerGeom.applyMatrix( new THREE.Matrix4().makeRotationX( Math.PI/2 ) );
+  meshLowerCone.lookAt( point );
+  scene.add( meshLowerCone );
+
+
+  var radius   = 10,
+    segments = 160,
+        circMat = new THREE.LineBasicMaterial( { color: 0x39CBCC, transparent:true, opacity: .5 } ),
+    dashMaterial = new THREE.LineDashedMaterial( { color: 0x39CBCC, dashSize: 0.5, gapSize: 0.5} ),
+    topBottCircGeom = new THREE.CircleGeometry( radius, segments );
+
+
+  topBottCircGeom.vertices.shift();  // Remove center vertex
+  topBottCircGeom.computeLineDistances();
+  var circTop = new THREE.Line( topBottCircGeom, circMat);
+  circTop.position.set( 0, 0, 10 );
+  scene.add( circTop ) ;
+
+  var circBott = new THREE.Line( topBottCircGeom, circMat);
+  circBott.position.set( 0, 0, -10 );
+  scene.add( circBott ) ;
+
+  
+
+
+
+  var xMax = 10, yMax = 15, zMax = 10;
+
+  var XYsquareGeometry = new THREE.Geometry(); 
+  XYsquareGeometry.vertices.push(new THREE.Vector3(xMax,  yMax, 0.0)); // A
+  XYsquareGeometry.vertices.push(new THREE.Vector3(xMax, -yMax, 0.0)); // B
+  XYsquareGeometry.vertices.push(new THREE.Vector3( -xMax,  -yMax, 0.0)); // C
+  XYsquareGeometry.vertices.push(new THREE.Vector3( -xMax, yMax, 0.0)); // D
+  XYsquareGeometry.faces.push(new THREE.Face3(0, 1, 2)); 
+  XYsquareGeometry.faces.push(new THREE.Face3(2, 0, 3));
+
+  var squareMaterial = new THREE.MeshBasicMaterial({ 
+              color:0xBDFD51, transparent:true, opacity:0.5, side:THREE.DoubleSide 
+            });
+  var XYsquareMesh = new THREE.Mesh(XYsquareGeometry, squareMaterial); 
+  XYsquareMesh.position.set(0.0, slider2.value, slider3.value); 
+  scene.add(XYsquareMesh); 
+
+
+  var ellipseMat = new THREE.LineBasicMaterial({ linewidth:1, color:0x000000 });
+  var ellipseVec = new THREE.Geometry();
+
+  var parabolaMat = new THREE.LineBasicMaterial({ linewidth:1, color:0x000000 });
+  var parabolaVec = new THREE.Geometry();
+
+  var hyperbolaMat = new THREE.LineBasicMaterial({ linewidth:1, color:0x000000 });
+  var hyperbolaVec = new THREE.Geometry();
+
+
+
+  var q, s, a, b, c, C, E, A, cx, cy, rX, rY;
+
+  function drawConics() {
+    if(typeof ellipse != 'undefined'){
+      scene.remove(ellipse);
+    }
+    if(typeof hyperbola1 != 'undefined'){
+      scene.remove(hyperbola1);
+      scene.remove(hyperbola2);
+    }
+    if(typeof parabola != 'undefined'){
+      scene.remove(parabola);
+    }
+    if(typeof degParab != 'undefined'){
+      scene.remove(degParab);
+    }
+
+
+    s1 = 1*slider1.value;
+    s1Abs = Math.abs(s1);
+    q = slider1.value*Math.PI;
+    s = Math.tan(q);
+    a = 1*slider2.value;  
+    b = 1*slider3.value;
+    c = Math.sqrt( s*s + 1);  
+    C = ((s*s) - 1) / ((s*s) + 1);
+    E = ((2*b*s) + (2*a)) / Math.sqrt((s*s) + 1);
+    A = (b*b) - (a*a) - ((E*E) / (4*C));
+    cy = -E/(2*C) - a;
+    rX = Math.sqrt(Math.abs(A));
+    rY = Math.sqrt(Math.abs(A/C));
+    
+    XYsquareMesh.position.set(0.0, a, b);
+    XYsquareMesh.rotation.x = -q; 
+    
+
+
+
+    if(slider1.value > -0.25 && slider1.value < 0.25) {
+      
+
+      ellipseVec = new THREE.Geometry();
+      
+      for(t=0;t<=2*Math.PI+0.05;t+=0.05) {
+        pY = rY*Math.cos(t) - cy;
+        fudge = (-0.65*q + 0.11 * Math.sign(q)) * a * Math.sin(q) // Fine tuning for extremes of q
+        ellipseVec.vertices.push(new THREE.Vector3( 
+          rX*Math.sin(t),  
+          pY/c  - fudge, 
+          (-pY * s)/c + b + a*Math.sin(q)
+        ) );
+      }   
+      ellipse = new THREE.Line(ellipseVec, ellipseMat);
+      ellipseVec.verticesNeedUpdate = true;
+      scene.add(ellipse);
+      
+      if(rX == 0) {
+        conType.innerHTML = "?";      
+      } else if(slider1.value == 0) {
+        conType.innerHTML = "Circle";   
+      } else {
+        conType.innerHTML = "Ellipse";      
+      }
+      
+    } else if(slider1.value == -0.25 || slider1.value == 0.25) {
+      
+
+
+      if(rX == 0) {
+        degParabVec = new THREE.Geometry();
+        endY = 10;
+        if(q>0) {
+          endZ = -10;
+        } else {
+          endZ = 10;  
+        }
+        degParabVec.vertices.push(new THREE.Vector3(0, -endY, -endZ) );
+        degParabVec.vertices.push(new THREE.Vector3(0, endY, endZ) );
+        degParab = new THREE.Line(degParabVec, parabolaMat);
+        scene.add(degParab);
+        conType.innerHTML = "?";      
+      } else if (slider1.value == -slider2.value) {
+        conType.innerHTML = "?";
+      } else {
+        parabolaVec = new THREE.Geometry();
+        sgnA = a*Math.sign(q);
+        for(t=-15;t<15.5;t+=0.4) {
+          parabolaVec.vertices.push(new THREE.Vector3(t, 0, Math.sin(q)*t*t/(sgnA + b) - b/2) );
+        }
+        parabola = new THREE.Line(parabolaVec, parabolaMat);
+          
+        if(slider1.value == 0.25){
+          parabola.rotation.x = Math.PI/4;
+          fudge = -0.15*b;  // Why -0.15 works here? Dunno...
+          parabola.position.set( 0, -fudge + a/2, b + fudge + a/2);
+        } else {
+          parabola.rotation.x = 3*Math.PI/4;
+          fudge = 0.85*b; // Why 0.85 works here? Dunno...
+          parabola.position.set( 0, -fudge + a/2, b - fudge - a/2 );      
+        }     
+        parabolaVec.verticesNeedUpdate = true;
+        scene.add(parabola);
+        conType.innerHTML = "Parabola";   
+      }
+    } else {    
+
+
+
+      var rX2 = rX*rX;    
+      hyperbolaVec1 = new THREE.Geometry();
+      hyperbolaVec2 = new THREE.Geometry();
+      for(t=-10;t<9.9;t+=0.4) {
+        if(rX == 0) { // Fudge for degenerate case            
+            // There must be a simpler equation for this...
+          Y = (1.265*s1Abs + 0.355/(Math.sin(4.15*(s1Abs-1.75)))) * t;
+          conType.innerHTML = "?";        
+        } else {
+          Y = -(rY/rX)*Math.sqrt(t*t + rX2);
+          if(rX<0.1) {
+            conType.innerHTML = "?";        
+          } else {
+            conType.innerHTML = "Hyperbola";          
+          }
+        }     
+        hyperbolaVec1.vertices.push(new THREE.Vector3(
+          t,  Y + rY, 0
+        ) );
+        hyperbolaVec2.vertices.push(new THREE.Vector3(
+          t,  -Y - rY, 0
+        ) );      
+      }
+      hyperbola1 = new THREE.Line(hyperbolaVec1, hyperbolaMat);
+      hyperbola2 = new THREE.Line(hyperbolaVec2, hyperbolaMat);
+
+      g = -a*s/(s-1) - b/((s-1)); 
+      hyperbola1.position.set(0.0, -g,  g );
+      j = a*s/(s+1) - (-b)/(s+1) ;    
+      hyperbola2.position.set(0.0, j,  j );   
+      if(q<0) {   
+        if(hyperbola1.position.y < 0) {
+          h = Math.PI;      
+        } else {
+          h = 0;
+        }     
+        if(hyperbola2.position.y < 0) {
+          h = Math.PI;      
+        } else {
+          h = 0;
+        }     
+      } else {    
+        if(hyperbola1.position.y < 0) {
+          h = 0;      
+        } else {
+          h = Math.PI;
+        }
+        if(hyperbola2.position.y < 0) {
+          h = 0;      
+        } else {
+          h = Math.PI;
+        }   
+      }
+      rot = h - q;    
+      hyperbola1.rotation.x = rot;
+      hyperbola2.rotation.x = rot;
+      scene.add(hyperbola1);  
+      scene.add(hyperbola2);      
+    } 
+  }
+
+  drawConics();
+
+  
+  var listener = function() {
+    window.requestAnimationFrame(function() {
+    drawConics();
+    });
+  };
+
+  slider1.addEventListener("input", function() {
+    listener();
+    slider1.addEventListener("change", listener);
+  });
+  slider1.addEventListener("change", function() {
+    listener();
+    slider1.removeEventListener("input", listener);
+  }); 
+  
+  slider2.addEventListener("input", function() {
+    listener();
+    slider1.addEventListener("change", listener);
+  });
+  slider2.addEventListener("change", function() {
+    listener();
+    slider2.removeEventListener("input", listener);
+  }); 
+  
+  slider3.addEventListener("input", function() {
+    listener();
+    slider3.addEventListener("change", listener);
+  });
+  slider3.addEventListener("change", function() {
+    listener();
+    slider3.removeEventListener("input", listener);
+  }); 
+  
+  
+  //////////////////////////
+  //
+  // Animate
+  //
+  //////////////////////////
+
+  function animate() {
+    renderer.render( scene, camera ); 
+    requestAnimationFrame( animate );
+  }
+
+  animate();
+}
+</script>
+
+
+<script>
+
+function loadScript(t,e){var a=document.createElement("script");a.type="text/javascript",a.async=!0,a.readyState?a.onreadystatechange=function(){("loaded"==a.readyState||"complete"==a.readyState)&&(a.onreadystatechange=null,e&&"function"==typeof e&&e())}:a.onload=function(){e&&"function"==typeof e&&e()},a.src=t,document.head.appendChild(a)}
+loadScript("./includes/cssjs/three/three.min.r77.js", function() { 
+ loadScript("./includes/cssjs/three/OrbitControls.min.r77.js", function() { 
+  loadScript("./includes/cssjs/ddivs-voting-2018-04-12.min.js", function() { 
+   doThree();
+    
+
+}) }) });
+</script>
+</body>
+
+</html>
